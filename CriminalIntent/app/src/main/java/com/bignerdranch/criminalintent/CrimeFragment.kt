@@ -13,59 +13,58 @@ import androidx.fragment.app.Fragment
 
 class CrimeFragment : Fragment() {
 
-    private lateinit var crime: Crime
-    private lateinit var titleField: EditText
-    private lateinit var dateButton: Button
-    private lateinit var solvedCheckBox: CheckBox
+	private lateinit var crime: Crime
+	private lateinit var titleField: EditText
+	private lateinit var dateButton: Button
+	private lateinit var solvedCheckBox: CheckBox
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
 
-        crime = Crime()
-    }
+		crime = Crime()
+	}
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_crime, container, false)
+	override fun onCreateView(
+		inflater: LayoutInflater,
+		container: ViewGroup?,
+		savedInstanceState: Bundle?
+	): View? {
+		val view = inflater.inflate(R.layout.fragment_crime, container, false)
 
-        titleField = view.findViewById(R.id.crime_title) as EditText
-        dateButton = view.findViewById(R.id.crime_date) as Button
-        solvedCheckBox = view.findViewById(R.id.crime_solved) as CheckBox
+		titleField = view.findViewById(R.id.crime_title) as EditText
+		dateButton = view.findViewById(R.id.crime_date) as Button
+		solvedCheckBox = view.findViewById(R.id.crime_solved) as CheckBox
 
-        dateButton.apply {
-            text = crime.date.toString()
-            isEnabled = false
-        }
+		dateButton.apply {
+			text = crime.date.toString()
+			isEnabled = false
+		}
 
-        return view
-    }
+		return view
+	}
 
-    override fun onStart() {
-        super.onStart()
+	override fun onStart() {
+		super.onStart()
 
-        titleField.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?,
-                                           start: Int,
-                                           count: Int,
-                                           after: Int) {}
-            override fun afterTextChanged(s: Editable?) {}
-            override fun onTextChanged(s: CharSequence?,
-                                       start: Int,
-                                       before: Int,
-                                       count: Int) {
-                crime.title = s.toString()
-                println(crime.title)
-            }
-        }
-        )
+		titleField.addTextChangedListener(object : TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?,
+										   start: Int,
+										   count: Int,
+										   after: Int) {}
+			override fun afterTextChanged(s: Editable?) {}
+			override fun onTextChanged(s: CharSequence?,
+									   start: Int,
+									   before: Int,
+									   count: Int) {
+				crime.title = s.toString()
+			}
+		}
+		)
 
-        solvedCheckBox.apply {
-            setOnCheckedChangeListener { _, isChecked ->
-                crime.isSolved = isChecked
-            }
-        }
-    }
+		solvedCheckBox.apply {
+			setOnCheckedChangeListener { _, isChecked ->
+				crime.isSolved = isChecked
+			}
+		}
+	}
 }
