@@ -4,4 +4,8 @@
     <string name="crime_title_label">Title</string>
     <string name="crime_details_label">Details</string>
     <string name="crime_solved_label">Solved</string>
+
+    <string name="new_crime">New Crime</string>
+    <string name="if_empty_string">Ooooops, it seems to be empty</string>
+    <string name="if_empty_button_string">Click me to add new crime</string>
 </resources>

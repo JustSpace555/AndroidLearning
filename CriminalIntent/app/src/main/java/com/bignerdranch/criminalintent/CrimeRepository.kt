@@ -48,4 +48,10 @@ class CrimeRepository private constructor(context: Context) {
 			crimeDao.addCrime(crime)
 		}
 	}
+
+	fun removeCrime(crime: Crime) {
+		executor.execute {
+			crimeDao.removeCrime(crime)
+		}
+	}
 }

@@ -3,9 +3,7 @@ package com.bignerdranch.criminalintent
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -51,6 +49,11 @@ class CrimeListFragment: Fragment() {
 		callbacks = null
 	}
 
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setHasOptionsMenu(true)
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
@@ -79,8 +82,26 @@ class CrimeListFragment: Fragment() {
 		})
 	}
 
+	override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+		super.onCreateOptionsMenu(menu, inflater)
+		inflater.inflate(R.menu.fragment_crime_list, menu)
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem): Boolean {
+		return when (item.itemId) {
+			R.id.new_crime -> {
+				val crime = Crime()
+				crimeListViewModel.addCrime(crime)
+				callbacks?.onCrimeSelected(crime.id)
+				true
+			}
+			else -> return super.onOptionsItemSelected(item)
+		}
+	}
+
 	private inner class CrimeHolder(view: View):	RecyclerView.ViewHolder(view),
-													View.OnClickListener {
+													View.OnClickListener,
+                                                    View.OnLongClickListener {
 		private lateinit var crime: Crime
 		private val titleTextView: TextView = itemView.findViewById(R.id.crime_title)
 		private val dateTextView: TextView = itemView.findViewById(R.id.crime_date)
@@ -88,6 +109,7 @@ class CrimeListFragment: Fragment() {
 
 		init {
 			itemView.setOnClickListener(this)
+            itemView.setOnLongClickListener(this)
 		}
 
 		fun bind(crime: Crime) {
@@ -104,6 +126,10 @@ class CrimeListFragment: Fragment() {
 			callbacks?.onCrimeSelected(crime.id)
 		}
 
+        override fun onLongClick(v: View?): Boolean {
+            crimeListViewModel.removeCrime(crime)
+            return true
+        }
 	}
 
 	private inner class CrimeDiffUtil(): DiffUtil.ItemCallback<Crime>() {
