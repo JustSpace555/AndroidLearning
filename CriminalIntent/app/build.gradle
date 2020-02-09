@@ -23,6 +23,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    kapt {
+        arguments {
+            arg("room.schemaLocation",
+                    "/Users/qmebble/Git/AndroidLearning/CriminalIntent/app/" +
+                    "src/main/java/com/bignerdranch/criminalintent/database/RoomSchema")
+        }
+    }
 }
 
 dependencies {
