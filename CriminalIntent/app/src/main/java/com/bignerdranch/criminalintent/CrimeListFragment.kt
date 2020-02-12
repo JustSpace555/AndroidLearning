@@ -77,6 +77,7 @@ class CrimeListFragment: Fragment() {
 			Observer { crimes ->
 				crimes?.let {
 					Log.i(TAG, "Got crimes ${crimes.size}")
+					adapter?.submitList(crimes)
 					updateUI(crimes)
 			}
 		})

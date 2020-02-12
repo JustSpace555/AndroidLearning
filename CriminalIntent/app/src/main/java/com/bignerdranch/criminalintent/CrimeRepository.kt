@@ -1,6 +1,7 @@
 package com.bignerdranch.criminalintent
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.room.Room
 import com.bignerdranch.criminalintent.database.CrimeDatabase
