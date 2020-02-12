@@ -17,13 +17,9 @@ import java.text.DateFormat
 import java.util.UUID
 
 
-private const val TAG = "CrimeListFragment"
+private const val TAG = "CI.CrimeListFragment"
 
 class CrimeListFragment: Fragment() {
-
-	interface Callbacks {
-		fun onCrimeSelected(crimeId: UUID)
-	}
 
 	private var callbacks: Callbacks? = null
 
@@ -39,18 +35,38 @@ class CrimeListFragment: Fragment() {
 		}
 	}
 
+
+
+	/*
+		Callbacks
+	 */
+
+	interface Callbacks {
+		fun onCrimeSelected(crimeId: UUID)
+		fun ifCrimeListEmpty()
+	}
+
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
+		Log.d(TAG, "On attach")
 		callbacks = context as Callbacks?
 	}
 
 	override fun onDetach() {
 		super.onDetach()
+		Log.d(TAG, "On Detach")
 		callbacks = null
 	}
 
+
+
+	/*
+	 *	Start fragment
+	 */
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		Log.d(TAG, "On Create")
 		setHasOptionsMenu(true)
 	}
 
@@ -62,6 +78,8 @@ class CrimeListFragment: Fragment() {
 		val view = inflater.inflate(R.layout.fragment_crime_list,
 			container, false)
 
+		Log.d(TAG, "On create view")
+
 		crimeRecyclerView = view.findViewById(R.id.crime_recycler_view) as RecyclerView
 		crimeRecyclerView.layoutManager = LinearLayoutManager(context)
 		crimeRecyclerView.adapter = adapter
@@ -69,8 +87,12 @@ class CrimeListFragment: Fragment() {
 		return view
 	}
 
+	private var amountTimes = 1
+
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		Log.d(TAG, "On view created")
 
 		crimeListViewModel.crimeListLiveData.observe(
 			viewLifecycleOwner,
@@ -80,8 +102,18 @@ class CrimeListFragment: Fragment() {
 					adapter?.submitList(crimes)
 					updateUI(crimes)
 			}
+				if (crimes.isEmpty()) {
+					Log.d(TAG, "Crime list is empty #${amountTimes++}")
+					callbacks?.ifCrimeListEmpty()
+				}
 		})
 	}
+
+
+
+	/*
+	 *	Menu
+	 */
 
 	override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
 		super.onCreateOptionsMenu(menu, inflater)
@@ -99,6 +131,12 @@ class CrimeListFragment: Fragment() {
 			else -> return super.onOptionsItemSelected(item)
 		}
 	}
+
+
+
+	/*
+	 *	Crimes list
+	 */
 
 	private inner class CrimeHolder(view: View):	RecyclerView.ViewHolder(view),
 													View.OnClickListener,
@@ -158,8 +196,19 @@ class CrimeListFragment: Fragment() {
 		}
 	}
 
+
+
+	/*
+	 *	Additional functions
+	 */
 	private fun updateUI(crimes: List<Crime>) {
 		adapter = CrimeAdapter(crimes)
 		crimeRecyclerView.adapter = adapter
+		//TODO(Возможно надо перенести проверку на пустой лист сюда)
+	}
+
+	fun addCrime(crime: Crime) {
+		crimeListViewModel.addCrime(crime)
+		Log.d(TAG, "Adding crime to empty list with name: ${crime.title}")
 	}
 }

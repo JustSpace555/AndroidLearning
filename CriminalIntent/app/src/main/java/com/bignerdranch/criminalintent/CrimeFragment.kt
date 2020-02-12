@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 private const val ARG_CRIME_ID = "crime_id"
-private const val TAG = "CrimeFragment"
+private const val TAG = "CI.CrimeFragment"
 private const val DIALOG_DATE = "DialogDate"
 private const val DIALOG_TIME = "DialogTime"
 private const val REQUEST_DATE = 0
@@ -57,40 +57,15 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 
 
 	/*
-		Fragment start
+		Fragment lifecycle functions
 	*/
-
-	override fun onStart() {
-		super.onStart()
-
-		titleField.addTextChangedListener(object : TextWatcher {
-			override fun beforeTextChanged(s: CharSequence?,
-										   start: Int,
-										   count: Int,
-										   after: Int) {}
-			override fun afterTextChanged(s: Editable?) {}
-			override fun onTextChanged(s: CharSequence?,
-									   start: Int,
-									   before: Int,
-									   count: Int) {
-				crime.title = s.toString()
-			}
-		}
-		)
-
-		solvedCheckBox.apply {
-			setOnCheckedChangeListener { _, isChecked ->
-				crime.isSolved = isChecked
-			}
-		}
-	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		crime = Crime()
 		val crimeId: UUID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
-		Log.d(TAG, "args bundle crime ID: $crimeId")
+		Log.d(TAG, "On create")
 		crimeDetailViewModel.loadCrime(crimeId)
 	}
 
@@ -100,6 +75,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 		savedInstanceState: Bundle?
 	): View? {
 		val view = inflater.inflate(R.layout.fragment_crime, container, false)
+
+		Log.d(TAG, "On create view")
 
 		titleField = view.findViewById(R.id.crime_title) as EditText
 		dateButton = view.findViewById(R.id.crime_date) as Button
@@ -127,7 +104,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 					Toast.LENGTH_SHORT).show()
 			else {
 				crimeDetailViewModel.saveCrime(crime)
-				onDestroyView()
+//				activity?.supportFragmentManager?.popBackStack()
 			}
 		}
 
@@ -136,6 +113,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		Log.d(TAG, "On view created")
 
 		crimeDetailViewModel.crimeLiveData.observe(
 			viewLifecycleOwner, Observer { crime ->
@@ -146,6 +125,49 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 			}
 		)
 	}
+
+	override fun onStart() {
+		super.onStart()
+
+		Log.d(TAG, "On start")
+
+		titleField.addTextChangedListener(object : TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?,
+										   start: Int,
+										   count: Int,
+										   after: Int) {}
+			override fun afterTextChanged(s: Editable?) {}
+			override fun onTextChanged(s: CharSequence?,
+									   start: Int,
+									   before: Int,
+									   count: Int) {
+				crime.title = s.toString()
+			}
+		}
+		)
+
+		solvedCheckBox.apply {
+			setOnCheckedChangeListener { _, isChecked ->
+				crime.isSolved = isChecked
+			}
+		}
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+		Log.d(TAG, "On detach")
+		if (crime.title.isBlank() || crime.title.isEmpty()) {
+			Log.d(TAG, "Empty crime's title")
+			crime.title = "Unnamed crime #${++crimeDetailViewModel.unnamedCrimes}"
+			crimeDetailViewModel.saveCrime(crime)
+		}
+	}
+
+
+
+	/*
+	 *	Additional functions
+	 */
 
 	@SuppressLint("SetTextI18n")
 	private fun updateUI() {
@@ -160,6 +182,11 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 		}
 	}
 
+
+
+	/*
+	 *	Update date
+	 */
 	override fun onDateSelected(date: Date) {
 		crime.date = date
 		updateUI()
