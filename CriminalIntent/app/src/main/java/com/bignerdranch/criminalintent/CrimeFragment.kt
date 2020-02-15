@@ -8,45 +8,50 @@ import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.jar.Manifest
 
-private const val ARG_CRIME_ID = "crime_id"
-private const val TAG = "CI.CrimeFragment"
-private const val DIALOG_DATE = "DialogDate"
-private const val DIALOG_TIME = "DialogTime"
-private const val REQUEST_DATE = 0
-private const val REQUEST_TIME = 1
-private const val DATE_FORMAT = "E, MMM d, yyyy, hh:mm"
-private const val REQUEST_CONTACT = 3
+private const val DATE_FORMAT 		= "E, MMM d, yyyy, hh:mm"
+private const val TAG 				= "CI.CrimeFragment"
+private const val ARG_CRIME_ID 		= "crime_id"
+private const val DIALOG_DATE 		= "DialogDate"
+private const val DIALOG_TIME 		= "DialogTime"
+private const val REQUEST_DATE 		= 0
+private const val REQUEST_TIME 		= 1
+private const val REQUEST_CONTACT	= 3
+private const val REQUEST_PHOTO 	= 4
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragment.Callbacks {
 
-	private lateinit var crime:				Crime
-	private lateinit var addCrimeButton:	Button
-	private lateinit var timeButton:		Button
-	private lateinit var reportButton:		Button
-	private lateinit var dateButton:		Button
-	private lateinit var suspectButton:		Button
-	private lateinit var callButton:		Button
+	private lateinit var photoButton:		ImageButton
+	private lateinit var photoView:			ImageView
 	private lateinit var titleField:		EditText
 	private lateinit var solvedCheckBox:	CheckBox
+	private lateinit var addCrimeButton:	Button
+	private lateinit var suspectButton:		Button
+	private lateinit var reportButton:		Button
+	private lateinit var timeButton:		Button
+	private lateinit var dateButton:		Button
+	private lateinit var callButton:		Button
+	private lateinit var crime:				Crime
+	private lateinit var photoFile: 		File
+	private lateinit var photoUri:			Uri
 	private val crimeDetailViewModel:		CrimeDetailViewModel by lazy {
 		ViewModelProvider(this).get(CrimeDetailViewModel::class.java)
 	}
@@ -88,14 +93,16 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 
 		val view = inflater.inflate(R.layout.fragment_crime, container, false)
 
-		titleField = view.findViewById(R.id.crime_title) as EditText
-		dateButton = view.findViewById(R.id.crime_date) as Button
-		timeButton = view.findViewById(R.id.crime_time) as Button
-		solvedCheckBox = view.findViewById(R.id.crime_solved) as CheckBox
-		addCrimeButton = view.findViewById(R.id.add_crime_button) as Button
-		reportButton = view.findViewById(R.id.crime_report ) as Button
-		suspectButton = view.findViewById(R.id.crime_suspect) as Button
-		callButton = view.findViewById(R.id.call_suspect_button) as Button
+		photoButton		= view.findViewById(R.id.crime_camera)			as ImageButton
+		photoView		= view.findViewById(R.id.crime_photo)			as ImageView
+		solvedCheckBox 	= view.findViewById(R.id.crime_solved) 			as CheckBox
+		titleField 		= view.findViewById(R.id.crime_title) 			as EditText
+		callButton 		= view.findViewById(R.id.call_suspect_button) 	as Button
+		addCrimeButton 	= view.findViewById(R.id.add_crime_button) 		as Button
+		suspectButton 	= view.findViewById(R.id.crime_suspect) 		as Button
+		reportButton 	= view.findViewById(R.id.crime_report)	 		as Button
+		dateButton 		= view.findViewById(R.id.crime_date) 			as Button
+		timeButton 		= view.findViewById(R.id.crime_time) 			as Button
 
 		return view
 	}
@@ -107,6 +114,11 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 			viewLifecycleOwner, Observer { crime ->
 				crime?.let {
 					this.crime = crime
+					photoFile = crimeDetailViewModel.getPhotoFile(crime)
+					photoUri = FileProvider.getUriForFile(
+						requireActivity(), "com.bignerdranch.criminalintent.fileprovider",
+						photoFile
+					)
 				}
 				updateUI()
 			}
@@ -203,6 +215,26 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 				startActivity(dialContactIntent)
 			}
 		}
+
+		photoButton.apply {
+			val packageManager: PackageManager = requireActivity().packageManager
+			val captureImage = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+			val resolvedActivity: ResolveInfo? = packageManager.resolveActivity(
+				captureImage, PackageManager.MATCH_DEFAULT_ONLY
+			)
+
+			if (resolvedActivity == null)
+				isEnabled = false
+
+			setOnClickListener {
+
+				if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) !=
+						PackageManager.PERMISSION_GRANTED)
+					requestPermissions(arrayOf(android.Manifest.permission.CAMERA), REQUEST_PHOTO)
+				else
+					openCamera(captureImage, packageManager)
+			}
+		}
 	}
 
 	override fun onDestroy() {
@@ -212,6 +244,13 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 			crimeDetailViewModel.saveCrime(crime)
 		}
 	}
+
+	override fun onDetach() {
+		super.onDetach()
+		requireActivity().revokeUriPermission(photoUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+	}
+
+
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		super.onActivityResult(requestCode, resultCode, data)
@@ -258,6 +297,11 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 					crimeDetailViewModel.saveCrime(crime)
 				}
 			}
+
+			requestCode == REQUEST_PHOTO -> {
+				requireActivity().revokeUriPermission(photoUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+				updatePhotoView()
+			}
 		}
 	}
 
@@ -265,6 +309,12 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 
 	/*
 	 *	Additional functions
+	 */
+
+
+
+	/*
+	 *	Update data
 	 */
 
 	@SuppressLint("SetTextI18n")
@@ -280,6 +330,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 		}
 		if (crime.suspect.isNotEmpty())
 			suspectButton.text = crime.suspect
+		updatePhotoView()
 	}
 
 	override fun onRequestPermissionsResult(
@@ -296,13 +347,24 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 					startActivityForResult(pickContactIntent, REQUEST_CONTACT)
 				}
 			}
+			REQUEST_PHOTO -> {
+				if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					openCamera(Intent(MediaStore.ACTION_IMAGE_CAPTURE), requireActivity().packageManager)
+				}
+			}
 		}
 	}
 
+	private fun updatePhotoView() {
+		if (photoFile.exists()) {
+			photoView.setImageBitmap(
+				getScaledBitmap(photoFile.path, requireActivity())
+			)
+		}
+		else
+			photoView.setImageDrawable(null)
+	}
 
-	/*
-	 *	Update date
-	 */
 	override fun onDateSelected(date: Date) {
 		crime.date = date
 		updateUI()
@@ -326,5 +388,22 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 			getString(R.string.crime_report_suspect, crime.suspect)
 
 		return getString(R.string.crime_report, crime.title, dateString, solvedString, suspect)
+	}
+
+	private fun openCamera(captureImage: Intent, packageManager: PackageManager) {
+		captureImage.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+		val cameraActivities: List<ResolveInfo> = packageManager.queryIntentActivities(
+			captureImage, PackageManager.MATCH_DEFAULT_ONLY
+		)
+
+		for (cameraActivity in cameraActivities) {
+			requireActivity().grantUriPermission(
+				cameraActivity.activityInfo.packageName,
+				photoUri,
+				Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+			)
+		}
+
+		startActivityForResult(captureImage, REQUEST_PHOTO)
 	}
 }
