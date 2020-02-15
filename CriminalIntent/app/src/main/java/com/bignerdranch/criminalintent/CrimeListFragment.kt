@@ -4,8 +4,10 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import org.w3c.dom.Text
 import java.text.DateFormat
 import java.util.UUID
 
@@ -25,6 +28,9 @@ class CrimeListFragment: Fragment() {
 
 	private var adapter: CrimeAdapter? = CrimeAdapter(emptyList())
 	private lateinit var crimeRecyclerView: RecyclerView
+	private lateinit var emptyText: TextView
+	private lateinit var emptyButton: Button
+
 	private val crimeListViewModel: CrimeListViewModel by lazy {
 		ViewModelProvider(this).get(CrimeListViewModel::class.java)
 	}
@@ -43,7 +49,6 @@ class CrimeListFragment: Fragment() {
 
 	interface Callbacks {
 		fun onCrimeSelected(crimeId: UUID)
-		fun ifCrimeListEmpty()
 	}
 
 	override fun onAttach(context: Context) {
@@ -84,10 +89,15 @@ class CrimeListFragment: Fragment() {
 		crimeRecyclerView.layoutManager = LinearLayoutManager(context)
 		crimeRecyclerView.adapter = adapter
 
+		emptyButton = view.findViewById(R.id.empty_button) as Button
+		emptyText = view.findViewById(R.id.empty_text_view) as TextView
+
+		emptyButton.setOnClickListener {
+			createNewCrime()
+		}
+
 		return view
 	}
-
-	private var amountTimes = 1
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
@@ -102,10 +112,6 @@ class CrimeListFragment: Fragment() {
 					adapter?.submitList(crimes)
 					updateUI(crimes)
 			}
-				if (crimes.isEmpty()) {
-					Log.d(TAG, "Crime list is empty #${amountTimes++}")
-					callbacks?.ifCrimeListEmpty()
-				}
 		})
 	}
 
@@ -123,9 +129,7 @@ class CrimeListFragment: Fragment() {
 	override fun onOptionsItemSelected(item: MenuItem): Boolean {
 		return when (item.itemId) {
 			R.id.new_crime -> {
-				val crime = Crime()
-				crimeListViewModel.addCrime(crime)
-				callbacks?.onCrimeSelected(crime.id)
+				createNewCrime()
 				true
 			}
 			else -> return super.onOptionsItemSelected(item)
@@ -204,11 +208,20 @@ class CrimeListFragment: Fragment() {
 	private fun updateUI(crimes: List<Crime>) {
 		adapter = CrimeAdapter(crimes)
 		crimeRecyclerView.adapter = adapter
-		//TODO(Возможно надо перенести проверку на пустой лист сюда)
+		if (crimes.isEmpty()) {
+			emptyButton.visibility = View.VISIBLE
+			emptyText.visibility = View.VISIBLE
+		}
+		else {
+			emptyButton.visibility = View.GONE
+			emptyText.visibility = View.GONE
+		}
 	}
 
-	fun addCrime(crime: Crime) {
+	private fun createNewCrime() {
+		val crime = Crime()
 		crimeListViewModel.addCrime(crime)
-		Log.d(TAG, "Adding crime to empty list with name: ${crime.title}")
+		callbacks?.onCrimeSelected(crime.id)
 	}
+
 }

@@ -3,15 +3,15 @@ package com.bignerdranch.criminalintent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.fragment.app.Fragment
 import java.util.*
 
 private const val TAG = "CI.MainActivity"
 
-class MainActivity : AppCompatActivity(), CrimeListFragment.Callbacks, IfEmptyFragment.Callbacks {
+class MainActivity : AppCompatActivity(), CrimeListFragment.Callbacks {
 
     private lateinit var crimeListFragment: CrimeListFragment
     private lateinit var crimeFragment: CrimeFragment
-    private lateinit var emptyFragment: IfEmptyFragment
 
     private fun putInfoToLog(text: String) {
         Log.d(TAG, text)
@@ -46,29 +46,6 @@ class MainActivity : AppCompatActivity(), CrimeListFragment.Callbacks, IfEmptyFr
             .replace(R.id.fragment_container, crimeFragment)
             .addToBackStack(null)
             .commit()
-        putInfoToLog("After transaction:" + supportFragmentManager.fragments.toString())
-    }
-
-    override fun ifCrimeListEmpty() {
-        emptyFragment = IfEmptyFragment()
-        putInfoToLog("Empty fragment called")
-        putInfoToLog("Before transaction:" + supportFragmentManager.fragments.toString())
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, emptyFragment)
-            .addToBackStack(null)
-            .commit()
-        putInfoToLog("After transaction:" + supportFragmentManager.fragments.toString())
-    }
-
-    override fun onButtonPressed() {
-        putInfoToLog("Button pressed")
-        val crime = Crime()
-        crimeListFragment.addCrime(crime)
-        putInfoToLog("Before transaction:" + supportFragmentManager.fragments.toString())
-		supportFragmentManager.beginTransaction()
-			.replace(R.id.fragment_container, CrimeFragment.newInstance(crime.id))
-            .addToBackStack(null)
-			.commit()
         putInfoToLog("After transaction:" + supportFragmentManager.fragments.toString())
     }
 }
