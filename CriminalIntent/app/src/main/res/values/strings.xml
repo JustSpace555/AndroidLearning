@@ -10,6 +10,8 @@
     <string name="if_empty_button_string">Click me to add new crime</string>
     <string name="crime_suspect_text">Choose Suspect</string>
     <string name="crime_report_text">Send Crime Report</string>
+    <string name="save_crime_text">Save crime</string>
+    <string name="empty_title_toast">Title is empty. Please write something</string>
 
     <string name="crime_report">%1$s!
         The crime was discovered on %2$s. %3$s, and %4$s

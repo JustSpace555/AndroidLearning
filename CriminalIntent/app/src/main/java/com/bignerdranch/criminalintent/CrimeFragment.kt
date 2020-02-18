@@ -1,6 +1,5 @@
 package com.bignerdranch.criminalintent
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -16,31 +15,32 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import java.io.File
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.jar.Manifest
 
 private const val DATE_FORMAT 		= "E, MMM d, yyyy, hh:mm"
 private const val TAG 				= "CI.CrimeFragment"
 private const val ARG_CRIME_ID 		= "crime_id"
+private const val DIALOG_PHOTO		= "DialogPhoto"
 private const val DIALOG_DATE 		= "DialogDate"
 private const val DIALOG_TIME 		= "DialogTime"
 private const val REQUEST_DATE 		= 0
 private const val REQUEST_TIME 		= 1
 private const val REQUEST_CONTACT	= 3
 private const val REQUEST_PHOTO 	= 4
+private const val SHOW_PHOTO		= 5
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragment.Callbacks {
 
 	private lateinit var photoButton:		ImageButton
-	private lateinit var photoView:			ImageView
+	private lateinit var photoView:			ImageButton
 	private lateinit var titleField:		EditText
 	private lateinit var solvedCheckBox:	CheckBox
 	private lateinit var addCrimeButton:	Button
@@ -94,7 +94,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 		val view = inflater.inflate(R.layout.fragment_crime, container, false)
 
 		photoButton		= view.findViewById(R.id.crime_camera)			as ImageButton
-		photoView		= view.findViewById(R.id.crime_photo)			as ImageView
+		photoView		= view.findViewById(R.id.crime_photo)			as ImageButton
 		solvedCheckBox 	= view.findViewById(R.id.crime_solved) 			as CheckBox
 		titleField 		= view.findViewById(R.id.crime_title) 			as EditText
 		callButton 		= view.findViewById(R.id.call_suspect_button) 	as Button
@@ -165,7 +165,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 
 		addCrimeButton.setOnClickListener {
 			if (crime.title.isEmpty())
-				Toast.makeText(context, "Title is empty. Please write something",
+				Toast.makeText(context, R.string.empty_title_toast,
 					Toast.LENGTH_SHORT).show()
 			else {
 				crimeDetailViewModel.saveCrime(crime)
@@ -235,6 +235,14 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 					openCamera(captureImage, packageManager)
 			}
 		}
+
+		photoView.setOnClickListener {
+			FullPhotoDialog(photoFile).apply {
+				setTargetFragment(this@CrimeFragment, SHOW_PHOTO)
+				show(this@CrimeFragment.requireActivity().supportFragmentManager, DIALOG_PHOTO)
+			}
+		}
+
 	}
 
 	override fun onDestroy() {
@@ -317,12 +325,11 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 	 *	Update data
 	 */
 
-	@SuppressLint("SetTextI18n")
 	private fun updateUI() {
 		val cal = Calendar.getInstance()
 		cal.time = crime.date
 		titleField.setText(crime.title)
-		dateButton.text = SimpleDateFormat("E, MMM d, yyyy", Locale.ENGLISH).format(crime.date)
+		dateButton.text = DateFormat.getDateInstance(DateFormat.FULL).format(crime.date)
 		timeButton.text = SimpleDateFormat("hh:mm", Locale.ENGLISH).format(crime.date)
 		solvedCheckBox.apply {
 			isChecked = crime.isSolved
