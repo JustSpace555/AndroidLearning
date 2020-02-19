@@ -337,6 +337,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 		}
 		if (crime.suspect.isNotEmpty())
 			suspectButton.text = crime.suspect
+		callButton.isEnabled = crime.suspect.isNotBlank()
 		updatePhotoView()
 	}
 
@@ -367,9 +368,12 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks, TimePickerFragme
 			photoView.setImageBitmap(
 				getScaledBitmap(photoFile.path, requireActivity())
 			)
+			photoView.contentDescription = getString(R.string.crime_photo_image_description)
 		}
-		else
+		else {
 			photoView.setImageDrawable(null)
+			photoView.contentDescription = getString(R.string.crime_photo_no_image_description)
+		}
 	}
 
 	override fun onDateSelected(date: Date) {

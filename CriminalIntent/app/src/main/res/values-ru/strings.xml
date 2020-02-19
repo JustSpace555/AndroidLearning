@@ -24,4 +24,7 @@
 	<string name="call_suspect_string">Позвонить подозреваемому</string>
 	<string name="empty_title_toast">Описание преступления не заполнено. Пожалуйста опишите его.</string>
 	<string name="save_crime_text">Сохранить преступление</string>
+	<string name="crime_photo_button_description">Сфотографируйте место преступления</string>
+	<string name="crime_photo_image_description">Фото преступления наличиствуется</string>
+	<string name="crime_photo_no_image_description">Фото преступления отстутствует</string>
 </resources>
